@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("docubot-theme") || "light";
+  });
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [uploadStatus, setUploadStatus] = useState("");
@@ -16,6 +19,11 @@ function App() {
   ]);
   const [isUploading, setIsUploading] = useState(false);
   const [isAsking, setIsAsking] = useState(false);
+  const hasDocument = Boolean(uploadedFileName);
+
+  useEffect(() => {
+    localStorage.setItem("docubot-theme", theme);
+  }, [theme]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -127,19 +135,59 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className={`app theme-${theme}`}>
       <aside className="sidebar">
-        <h1>DocuBot</h1>
-        <p className="subtitle">Ask questions from your PDF</p>
+        <div className="brand">
+          <div className="brand-mark" aria-hidden="true">
+            D
+          </div>
+          <div>
+            <h1>DocuBot</h1>
+            <p className="subtitle">Ask questions from your PDF</p>
+          </div>
+        </div>
 
-        <div className="upload-card">
-          <h2>Upload PDF</h2>
+        <div className="theme-switch" aria-label="Theme selector">
+          <button
+            type="button"
+            className={theme === "light" ? "active" : ""}
+            onClick={() => setTheme("light")}
+          >
+            Light
+          </button>
+          <button
+            type="button"
+            className={theme === "dark" ? "active" : ""}
+            onClick={() => setTheme("dark")}
+          >
+            Dark
+          </button>
+        </div>
 
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-          />
+        <section className="upload-card" aria-labelledby="upload-title">
+          <div className="section-heading">
+            <p className="eyebrow">Workspace</p>
+            <h2 id="upload-title">Upload PDF</h2>
+          </div>
+
+          <label className="file-drop">
+            <span className="file-icon" aria-hidden="true">
+              PDF
+            </span>
+            <span className="file-copy">
+              <strong>{selectedFile ? selectedFile.name : "Choose a PDF"}</strong>
+              <small>
+                {selectedFile
+                  ? "Ready to upload"
+                  : "Drop in a document to start a chat"}
+              </small>
+            </span>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+            />
+          </label>
 
           {selectedFile && (
             <p className="file-name">Selected: {selectedFile.name}</p>
@@ -150,19 +198,33 @@ function App() {
           </button>
 
           {uploadStatus && <p className="upload-status">{uploadStatus}</p>}
-        </div>
+        </section>
 
-        <div className="info-card">
-          <h2>Current Document</h2>
-          <p>{uploadedFileName || "No PDF uploaded yet."}</p>
-        </div>
+        <section className="info-card" aria-labelledby="document-title">
+          <div className="section-heading">
+            <p className="eyebrow">Active file</p>
+            <h2 id="document-title">Current Document</h2>
+          </div>
+          <div className={`document-status ${hasDocument ? "ready" : ""}`}>
+            <span aria-hidden="true" />
+            <p>{uploadedFileName || "No PDF uploaded yet."}</p>
+          </div>
+        </section>
       </aside>
 
       <main className="chat-section">
         <div className="chat-header">
           <div>
             <h2>Document Chat</h2>
-            <p>Simple Version 1: PDF text + Gemini answer</p>
+            <p>
+              {hasDocument
+                ? `Ready to answer from ${uploadedFileName}`
+                : "Upload a PDF to unlock document-aware answers"}
+            </p>
+          </div>
+          <div className={`status-pill ${hasDocument ? "online" : ""}`}>
+            <span aria-hidden="true" />
+            {hasDocument ? "Document loaded" : "Waiting for PDF"}
           </div>
         </div>
 
